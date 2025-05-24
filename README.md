@@ -112,16 +112,6 @@ This project uses Minitest for automated testing. The tests verify that the Nix 
 
 ### Running Tests
 
-1.  Ensure you have Ruby and the Minitest gem installed. If you don't have Minitest, you can usually install it with:
-    ```bash
-    gem install minitest
-    ```
-2.  Navigate to the root of the project directory.
-3.  Run the test script:
-
-    ```bash
-    ruby tests/test_hello_flake.rb
-    ```
-
-    The script will output the test results, indicating any failures or errors.
+```bash
+  ruby tests/test_hello_flake.rb
 ```
