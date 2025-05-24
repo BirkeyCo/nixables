@@ -2,6 +2,25 @@
 
 This project provides a framework for generating Nix Flakes from package recipes written in a Ruby DSL. This allows users to define how a package should be built using Ruby, which is then translated into a `flake.nix` file that Nix can use.
 
+## Development Environment Setup
+
+This project provides a Nix Flake (`flake.nix` at the root) to create a consistent development environment. This environment includes Ruby, which is necessary for running the generator and test scripts.
+
+To activate the development environment:
+
+1.  Ensure you have [Nix installed with Flakes enabled](https://nixos.wiki/wiki/Flakes#Enable_flakes).
+2.  Navigate to the root of this project directory.
+3.  Run the following command to enter the development shell:
+
+    ```bash
+    nix develop
+    ```
+    Alternatively, you can use `nix shell .` for a more ephemeral shell.
+
+4.  Once inside the shell, you will have Ruby available. The environment also includes Minitest (for running tests) and is configured to support multiple platforms (Linux and macOS on x86_64 and ARM architectures).
+
+Now you can proceed to use the generator scripts or run tests as described in the sections below.
+
 ## Project Structure
 
 -   `recipes/`: Contains the package definitions written in Ruby.
