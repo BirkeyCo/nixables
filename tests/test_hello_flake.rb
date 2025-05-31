@@ -7,7 +7,7 @@ class TestHelloFlakeGeneration < Minitest::Test
   BASE_DIR = File.expand_path('..', __dir__) # Project root
   GENERATOR_SCRIPT = File.join(BASE_DIR, 'generator', 'generate_flake.rb')
   RECIPE_FILE = File.join(BASE_DIR, 'recipes', 'hello.rb')
-  
+
   FLAKE_OUTPUT_DIR = File.join(BASE_DIR, 'flakes', 'hello') # Renamed for clarity
   GENERATED_FLAKE_FILE = File.join(FLAKE_OUTPUT_DIR, 'flake.nix')
   GENERATED_SOURCE_SCRIPT = File.join(FLAKE_OUTPUT_DIR, 'src_files', 'bin', 'hello')
@@ -58,10 +58,10 @@ class TestHelloFlakeGeneration < Minitest::Test
 
     # 3. Check flake.nix content against fixture
     assert File.exist?(EXPECTED_FLAKE_FIXTURE_FILE), "Fixture file '#{EXPECTED_FLAKE_FIXTURE_FILE}' not found. This is a test setup error."
-    
+
     expected_flake_content = File.read(EXPECTED_FLAKE_FIXTURE_FILE)
     actual_flake_content = File.read(GENERATED_FLAKE_FILE)
-    
+
     # Normalize line endings to LF for comparison, and remove trailing newlines
     normalized_expected = expected_flake_content.gsub("\r\n", "\n").strip
     normalized_actual = actual_flake_content.gsub("\r\n", "\n").strip

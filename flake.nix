@@ -22,12 +22,12 @@
         in
         pkgs.mkShell {
           name = "ruby-nix-dev-env-${system}";
-          
+
           packages = [
             pkgs.ruby       # For running Ruby scripts
             pkgs.bash       # For general shell scripting
             pkgs.coreutils  # For basic utilities
-            
+
             # Attempt to add Minitest from rubyPackages.
             # The exact attribute might vary slightly based on Nixpkgs version or Ruby version.
             # Common names are minitest, rubygem-minitest.

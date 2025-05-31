@@ -24,16 +24,70 @@ Now you can proceed to use the generator scripts or run tests as described in th
 ## Project Structure
 
 -   `recipes/`: Contains the package definitions written in Ruby.
-    -   Example: `recipes/hello.rb`
--   `lib/`: Contains the Ruby DSL (`recipe_dsl.rb`) used in the recipes.
+    -   Example: `recipes/hello.rb` (old style)
+    -   Example: `recipes/hello_echo_formula.rb` (new Formula-style)
+-   `lib/`: Contains the Ruby DSLs (`recipe_dsl.rb` for old style, `formula_dsl.rb` for new style).
 -   `generator/`: Contains the script (`generate_flake.rb`) to convert Ruby recipes into Nix Flakes.
 -   `flakes/`: This directory is created by the generator. It stores the generated Nix Flakes and their associated source files.
-    -   Example: `flakes/hello/flake.nix`
-    -   Example: `flakes/hello/src_files/*`
+    -   Example output for `hello.rb`: `flakes/hello/flake.nix`
+    -   Example output for `hello_echo_formula.rb`: `flakes/HelloEchoFormula/flake.nix`
 
-## Getting Started: "Hello World" Example
+## Formula-Style Recipes
 
-This section guides you through generating a Nix Flake for a simple "hello world" package.
+The primary way to define packages is using "Formula-style" Ruby scripts. These scripts define a class that inherits from `HomebrewStyleDSL::Formula`.
+
+### Formula DSL Basics
+
+Here's a conceptual overview of the `Formula` class DSL:
+
+-   **Class Definition**: Your recipe will define a class inheriting from `HomebrewStyleDSL::Formula`. The name of this class (e.g., `MyPackageFormula`) determines the output package name.
+    ```ruby
+    class MyPackageFormula < HomebrewStyleDSL::Formula
+      # ... formula definition ...
+    end
+    ```
+
+-   **Metadata**:
+    *   `desc "description"`: A short description of the package.
+    *   `homepage "url"`: The upstream homepage for the package.
+    *   `version "version_string"`: The version of the package.
+    *   *(Future: `url "source_url"` and `sha256 "checksum"` for source tarballs)*
+    *   *(Future: `depends_on "dependency_name"` for specifying dependencies)*
+
+-   **Installation Method**:
+    *   `def install ... end`: This method defines the build and installation steps.
+    *   `define_install_steps do ... end`: Inside your `install` method, you call this with a block containing the actual steps.
+    *   `system "command", "arg1", "arg2", ...`: Used within the `define_install_steps` block to specify shell commands. These are recorded and translated into the Nix `installPhase`.
+    *   **Path Helpers**:
+        *   `prefix`: Represents the base installation directory (equivalent to `$out` in Nix).
+        *   `bin`: Resolves to `"\#{prefix}/bin"`.
+        *   `lib`: Resolves to `"\#{prefix}/lib"`.
+        *   *(And others like `man`, `include`, etc., can be added)*
+
+**Example: `hello_echo_formula.rb`**
+
+The following example shows how to create a simple package that installs a script using the Formula style:
+
+```ruby
+# recipes/hello_echo_formula.rb
+class HelloEchoFormula < HomebrewStyleDSL::Formula
+  desc "A simple formula that installs an echo script"
+  homepage "https://example.com/hello-echo"
+  version "0.1.0"
+
+  def install
+    define_install_steps do
+      system "mkdir", "-p", bin
+      system "sh", "-c", "echo '#!/bin/sh\necho "Hello, Echo from Homebrew-style formula!"' > \#{bin}/hello-echo"
+      system "chmod", "+x", "\#{bin}/hello-echo"
+    end
+  end
+end
+```
+
+## Getting Started: "Hello World" Example (Old Style)
+
+This section guides you through generating a Nix Flake for a simple "hello world" package using the older DSL style. For the newer Formula-style, see the section above.
 
 ### 1. The Recipe (`recipes/hello.rb`)
 
@@ -57,7 +111,7 @@ package "hello" do
 end
 ```
 
-**DSL Methods:**
+**DSL Methods (Old Style):**
 
 *   `package "name" do ... end`: Defines a new package.
 *   `set_version "version_string"`: Sets the package version.
@@ -65,35 +119,44 @@ end
 *   `write_file "relative/path/to/file", "content"`: Writes content to a file that will be part of the package's source.
 *   `make_executable "relative/path/to/file"`: Specifies that the given file should be made executable in the final package.
 
-### 2. Generating the Nix Flake
+### Generating the Nix Flake
 
 To generate the Nix Flake from a recipe:
 
-1.  Ensure you have Ruby installed.
+1.  Ensure you have Ruby installed (see "Development Environment Setup").
 2.  Navigate to the root of this project directory.
-3.  Run the generator script, providing the path to the recipe:
+3.  Run the generator script, providing the path to the recipe. For a Formula-style recipe (recommended):
 
+    ```bash
+    ruby generator/generate_flake.rb recipes/hello_echo_formula.rb
+    ```
+
+    This will produce output in the `flakes/` directory, named after the Formula class:
+    -   `flakes/HelloEchoFormula/empty_src/`: A placeholder directory as this formula generates its own content.
+    -   `flakes/HelloEchoFormula/flake.nix`: The generated Nix Flake.
+
+    For an older style recipe (e.g., `recipes/hello.rb`):
     ```bash
     ruby generator/generate_flake.rb recipes/hello.rb
     ```
-
-4.  This will produce the following output:
+    This will produce output like:
     -   `flakes/hello/src_files/bin/hello`: The actual shell script.
     -   `flakes/hello/flake.nix`: The generated Nix Flake.
 
+
 ### 3. Using the Flake (Conceptual)
 
-Once the `flake.nix` is generated, you would typically use Nix commands to build and run the package. For example:
+Once the `flake.nix` is generated, you would typically use Nix commands to build and run the package. For example (using `HelloEchoFormula` as an example):
 
 ```bash
 # Navigate to the flake's directory
-cd flakes/hello
+cd flakes/HelloEchoFormula
 
 # Build the package
 nix build
 
 # Run the executable (path may vary based on Nix version)
-./result/bin/hello
+./result/bin/hello-echo
 ```
 
 (Note: Actual Nix commands and usage are beyond the scope of this generator's README for now but are provided for context.)
@@ -101,10 +164,9 @@ nix build
 ## Future Development
 
 This is an initial framework. Future enhancements could include:
--   Dependency management.
--   More complex build steps.
--   Support for different types of sources (e.g., tarballs, Git repositories).
--   Automated testing of generated Flakes.
+-   Dependency management for Formula-style recipes.
+-   More complex build steps and source handling (tarballs, Git repos).
+-   Automated testing of generated Flakes for both DSL styles.
 
 ## Testing
 
@@ -117,10 +179,11 @@ This project uses Minitest for automated testing. The tests verify that the Nix 
     gem install minitest
     ```
 2.  Navigate to the root of the project directory.
-3.  Run the test script:
+3.  Run the test script(s):
 
     ```bash
     ruby tests/test_hello_flake.rb
+    ruby tests/test_hello_echo_formula.rb
     ```
 
     The script will output the test results, indicating any failures or errors.
